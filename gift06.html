@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第 6 週｜巢狀判斷（學生使用版）</title>
+<style>
+:root{
+  --bg:#f5f2ec; --surface:#ffffff; --surface-2:#faf8f4;
+  --ink:#1d2b3a; --ink-soft:#43566b; --ink-faint:#6b7a8c;
+  --teal:#0d6e6a; --teal-deep:#0a4f4c; --teal-tint:#e0efed; --teal-line:#b7d9d6;
+  --amber:#a05a0a; --amber-tint:#fbeed9; --amber-line:#e6cfa4;
+  --pass:#256b34; --pass-tint:#e3f1e4; --fail:#a3362c; --fail-tint:#fae5e2;
+  --code-bg:#132535; --code-ink:#eaf2f7;
+  --border:#ddd6c8; --divider:#e7e2d7;
+  --radius:14px;
+  --shadow:0 1px 2px rgba(29,43,58,.05),0 4px 14px rgba(29,43,58,.06);
+  --font-body:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,-apple-system,sans-serif;
+  --font-code:Consolas,"Courier New","Microsoft JhengHei",monospace;
+}
+*{box-sizing:border-box}
+html{font-size:20px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.7}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px;border-radius:6px}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+
+/* ── app shell ─────────────────────────── */
+.app{height:100vh;height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto}
+header{background:linear-gradient(135deg,#12333f,#0d4a48);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:.8em;padding:.55em 1.2em;box-shadow:0 2px 10px rgba(18,51,63,.25)}
+.brand{display:flex;align-items:center;gap:.7em;min-width:0}
+.brand-mark{flex:none;width:2.2em;height:2.2em;border-radius:.6em;background:rgba(255,255,255,.14);display:grid;place-items:center;font-size:.9em;font-weight:700;letter-spacing:.05em}
+.brand-text{min-width:0}
+.brand-week{font-size:.72em;font-weight:700;letter-spacing:.14em;color:#9fd6cf;text-transform:uppercase}
+.brand-title{font-size:.95em;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tools{display:flex;align-items:center;gap:.4em;flex:none}
+.tools button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:.55em;padding:.3em .65em;font-size:.8em;cursor:pointer;transition:background .18s}
+.tools button:hover{background:rgba(255,255,255,.25)}
+
+main{min-height:0;overflow:auto;padding:1.4em 1.2em 2.6em;scrollbar-width:thin}
+.slide{display:none;max-width:60em;margin:0 auto}
+.slide.active{display:block}
+
+footer{background:#12333f;color:#fff}
+.progress{height:.28em;background:rgba(255,255,255,.18)}
+.progress-fill{height:100%;width:0;background:linear-gradient(90deg,#2fb3a6,#e8b04b);border-radius:0 99em 99em 0;transition:width .25s ease}
+.footer-bar{display:flex;align-items:center;justify-content:space-between;gap:.6em;padding:.55em 1.2em;flex-wrap:wrap}
+.footer-bar button{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:.55em;padding:.35em .8em;font-size:.85em;cursor:pointer;transition:background .18s}
+.footer-bar button:hover:not(:disabled){background:rgba(255,255,255,.28)}
+.footer-bar button:disabled{opacity:.35;cursor:default}
+.jump-wrap{flex:1;min-width:8em;max-width:22em}
+.jump-wrap select{width:100%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:.55em;padding:.35em .5em;font-size:.8em;cursor:pointer}
+.jump-wrap select option{color:#1d2b3a;background:#fff}
+#count{font-size:.8em;color:#bcd9d6;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ── slide content ─────────────────────── */
+.kicker{font-size:.72em;font-weight:700;letter-spacing:.18em;color:var(--teal);margin:0 0 .6em}
+.kicker::before{content:"";display:inline-block;width:1.6em;height:.22em;background:var(--teal);border-radius:99em;margin-right:.55em;vertical-align:middle}
+h1{font-size:1.75em;line-height:1.3;margin:0 0 .65em;color:#16334a;text-wrap:balance}
+h1 small{display:block;font-size:.55em;font-weight:500;color:var(--ink-faint);margin-top:.35em;letter-spacing:.04em}
+p{margin:.7em 0}
+.lead{font-size:1.12em}
+.hint-line{font-size:.75em;color:var(--ink-faint);margin-top:1.6em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:1.1em 1.25em;margin:1em 0}
+.card > :first-child{margin-top:0}
+.card > :last-child{margin-bottom:0}
+
+.goal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(13em,1fr));gap:.8em;margin:1.2em 0}
+.goal{background:var(--surface);border:1px solid var(--border);border-left:.4em solid var(--teal);border-radius:12px;padding:.85em 1em;box-shadow:var(--shadow)}
+.goal-top{display:flex;align-items:center;gap:.55em;margin-bottom:.3em}
+.goal-num{flex:none;width:1.55em;height:1.55em;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;font-size:.75em;font-weight:700}
+.goal strong{font-size:.92em}
+.goal p{margin:.15em 0 0;font-size:.8em;color:var(--ink-soft);line-height:1.6}
+
+.callout{background:var(--teal-tint);border:1px solid var(--teal-line);border-left:.4em solid var(--teal);border-radius:12px;padding:.9em 1.1em;margin:1.1em 0;font-size:.95em}
+.callout strong{color:var(--teal-deep)}
+.threshold{background:var(--amber-tint);border:1px solid var(--amber-line);border-left:.4em solid var(--amber);border-radius:12px;padding:.9em 1.1em;margin:1.1em 0;font-size:.95em}
+.threshold strong{color:var(--amber)}
+.sample{background:var(--surface-2);border:1px dashed var(--border);border-radius:12px;padding:.85em 1.1em;margin:1.1em 0;font-size:.9em}
+.sample .io{font-family:var(--font-code);font-size:.95em;background:#fff;border:1px solid var(--border);border-radius:8px;padding:.35em .7em;display:inline-block;margin:.2em .3em .2em 0}
+
+/* number line */
+.numline{margin:1.4em 0;display:flex;align-items:stretch;gap:0}
+.nl-zone{flex:1;display:flex;align-items:center;justify-content:center;gap:.9em;padding:.9em .4em;font-family:var(--font-code);font-size:1em}
+.nl-zone.no{background:var(--fail-tint);border:1px solid #e8bcb6;border-radius:12px 0 0 12px;color:var(--fail)}
+.nl-zone.yes{background:var(--pass-tint);border:1px solid #bcd8bd;border-radius:0 12px 12px 0;color:var(--pass)}
+.nl-zone em{font-family:var(--font-body);font-style:normal;font-weight:700;font-size:.78em}
+.nl-mark{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2em;background:var(--amber);color:#fff;font-weight:700;padding:.55em .95em;margin:0 -.35em;z-index:1;box-shadow:0 4px 12px rgba(160,90,10,.35);border-radius:10px}
+.nl-mark b{font-family:var(--font-code);font-size:1.25em;line-height:1}
+.nl-mark span{font-size:.62em;letter-spacing:.1em}
+
+/* if/else branch */
+.branch{margin:1.3em 0;text-align:center}
+.branch-q{display:inline-block;background:#16334a;color:#fff;border-radius:99em;padding:.45em 1.3em;font-family:var(--font-code);font-size:.95em;box-shadow:var(--shadow)}
+.branch-q::before{content:"if ("}.branch-q::after{content:")"}
+.branch-paths{display:grid;grid-template-columns:1fr 1fr;gap:.8em;margin-top:1em}
+.path{border-radius:12px;padding:.8em .9em;text-align:center;border:1px solid}
+.path .path-label{display:inline-block;font-weight:700;font-size:.8em;border-radius:99em;padding:.15em .95em;margin-bottom:.45em}
+.path.yes{background:var(--pass-tint);border-color:#bcd8bd}
+.path.yes .path-label{background:var(--pass);color:#fff}
+.path.no{background:var(--fail-tint);border-color:#e8bcb6}
+.path.no .path-label{background:var(--fail);color:#fff}
+.path-body{font-family:var(--font-code);font-size:.95em}
+
+/* rule chips */
+.rule-demo{display:grid;grid-template-columns:repeat(auto-fit,minmax(10em,1fr));gap:.8em;margin:1.2em 0}
+.rule-item{border-radius:12px;padding:.9em 1em;text-align:center;border:1px solid}
+.rule-item .rule-pts{display:block;font-family:var(--font-code);font-size:1.5em;font-weight:700;line-height:1.1}
+.rule-item .rule-word{display:inline-block;margin-top:.4em;font-weight:700;font-size:.85em;border-radius:99em;padding:.2em 1em;color:#fff}
+.rule-item.pass{background:var(--pass-tint);border-color:#bcd8bd}
+.rule-item.pass .rule-word{background:var(--pass)}
+.rule-item.fail{background:var(--fail-tint);border-color:#e8bcb6}
+.rule-item.fail .rule-word{background:var(--fail)}
+.rule-item small{display:block;font-size:.7em;color:var(--ink-faint);margin-top:.45em}
+
+/* code block */
+.code{position:relative;background:var(--code-bg);border-radius:var(--radius);margin:1.1em 0;box-shadow:var(--shadow);overflow:hidden}
+.code-lang{position:absolute;left:.9em;top:.7em;font-size:.62em;font-weight:700;letter-spacing:.16em;color:#7fb8c9;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:99em;padding:.2em .8em}
+.copy{position:absolute;right:.7em;top:.6em;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#eaf2f7;border-radius:8px;padding:.25em .7em;font-size:.68em;cursor:pointer;transition:background .18s}
+.copy:hover{background:rgba(255,255,255,.22)}
+.code pre{overflow:auto;color:var(--code-ink);padding:2.6em 1.2em 1.1em;margin:0;font-family:var(--font-code);font-size:.88em;line-height:1.65;-webkit-overflow-scrolling:touch}
+.code pre code{font:inherit}
+.code .hl{color:#e8b04b}
+.code .kw{color:#6fd3c5}
+.code .st{color:#f4a4a0}
+
+/* table */
+.table{overflow:auto;margin:1.1em 0;border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;background:var(--surface);font-size:.88em}
+td,th{border-bottom:1px solid var(--divider);padding:.65em .85em;text-align:left;vertical-align:top}
+th{background:#eef3f0;color:#16334a;font-size:.92em;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td.num,th.num{font-family:var(--font-code);white-space:nowrap}
+td .tag{display:inline-block;font-size:.78em;font-weight:700;border-radius:6px;padding:.08em .55em}
+td .tag.p{background:var(--pass-tint);color:var(--pass)}
+td .tag.f{background:var(--fail-tint);color:var(--fail)}
+td .tag.g{background:#f9f0d2;color:#6d5400}
+
+/* details */
+details{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin:.8em 0;box-shadow:var(--shadow);overflow:hidden}
+summary{cursor:pointer;font-weight:700;padding:.8em 1.1em;display:flex;align-items:center;gap:.55em;font-size:.92em;color:var(--teal-deep);background:var(--surface-2);border-bottom:1px solid transparent;list-style:none;user-select:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"＋";flex:none;width:1.5em;height:1.5em;border-radius:50%;background:var(--teal-tint);color:var(--teal-deep);display:grid;place-items:center;font-weight:700;font-size:.85em;transition:transform .18s}
+details[open] summary::before{content:"－"}
+details[open] summary{border-bottom-color:var(--divider)}
+details > div, details > p{padding:.9em 1.15em;margin:0}
+details > :last-child{padding-bottom:1.05em}
+details .code{margin:.6em 0}
+
+
+/* tier + trace (week5) */
+.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5em,1fr));gap:.7em;margin:1.1em 0}
+.tier{border-radius:12px;padding:.85em 1em;text-align:center;border:1px solid}
+.tier b{display:block;font-size:1.08em}
+.tier .rng{display:block;font-size:.82em;margin-top:.25em}
+.tier small{display:block;color:var(--ink-faint);font-size:.72em;margin-top:.35em}
+.tier.gold{background:#f9f0d2;border-color:#e0cc93;color:#6d5400}
+.tier.silver{background:#e9edf3;border-color:#c4cfdd;color:#3d4c66}
+.tier.none{background:var(--fail-tint);border-color:#e8bcb6;color:var(--fail)}
+.trace{margin:1em 0}
+.trace-head{font-weight:700;margin:.9em 0 .4em}
+.tstep{display:flex;align-items:center;justify-content:space-between;gap:.8em;border-radius:10px;padding:.55em .95em;border:1px solid;font-family:var(--font-code);font-size:.88em;margin:.45em 0;flex-wrap:wrap}
+.tstep .verdict{font-family:var(--font-body);font-weight:700;font-size:.85em;white-space:nowrap}
+.tstep.miss{background:var(--surface-2);border-color:var(--border);color:var(--ink-soft)}
+.tstep.miss .verdict{color:var(--fail)}
+.tstep.hit{background:var(--pass-tint);border-color:#bcd8bd;color:var(--pass)}
+.tstep.hit .verdict{color:var(--pass)}
+
+/* duo comparison (week6) */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:.8em;margin:1.1em 0}
+.duo .code{margin:.4em 0}
+.duo-label{font-weight:700;font-size:.9em;margin-bottom:.35em;color:var(--teal-deep)}
+@media (max-width:900px){.duo{grid-template-columns:1fr}}
+/* quiz */
+.quiz{margin:1em 0}
+.quiz fieldset{border:1px solid var(--border);border-radius:12px;margin:.8em 0;background:var(--surface);box-shadow:var(--shadow);padding:0;overflow:hidden}
+.quiz legend{font-weight:700;padding:.75em 1.05em .45em;font-size:.92em;width:100%}
+.quiz label{display:flex;align-items:flex-start;gap:.55em;padding:.5em 1.05em;cursor:pointer;font-size:.88em;border-top:1px solid var(--divider);margin:0;transition:background .15s}
+.quiz label:hover{background:var(--surface-2)}
+.quiz input{margin-top:.32em;accent-color:var(--teal);flex:none}
+.quiz-actions{display:flex;align-items:center;gap:.7em;flex-wrap:wrap;margin-top:.6em}
+.btn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:.55em 1.25em;font-weight:700;font-size:.9em;cursor:pointer;box-shadow:var(--shadow);transition:background .18s}
+.btn:hover{background:var(--teal-deep)}
+.btn.ghost{background:transparent;color:var(--teal-deep);border:1px solid var(--teal-line);box-shadow:none}
+#feedback{font-weight:700;font-size:.9em}
+#feedback.ok{color:var(--pass)}
+#feedback.no{color:var(--fail)}
+
+ol,ul{padding-left:1.5em}
+li{margin:.4em 0}
+code.inline{background:#eef0e9;border:1px solid var(--border);border-radius:6px;padding:.08em .4em;font-family:var(--font-code);font-size:.9em}
+
+.fill{font-family:var(--font-code);letter-spacing:.06em}
+
+@media (max-width:640px){
+  html{font-size:17px}
+  .brand-title{font-size:.85em}
+  .tools button .lbl{display:none}
+  main{padding:1em .85em 2.2em}
+  .branch-paths{grid-template-columns:1fr}
+  .nl-zone{flex-wrap:wrap}
+  .footer-bar{flex-wrap:nowrap;gap:.45em}
+  .footer-bar button{padding:.35em .5em;font-size:.78em;white-space:nowrap}
+  .jump-wrap{min-width:0}
+  #count{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">W6</div>
+    <div class="brand-text">
+      <div class="brand-week">第 6 週｜Code::Blocks・C++</div>
+      <div class="brand-title">巢狀判斷：判斷裡面再判斷</div>
+    </div>
+  </div>
+  <div class="tools">
+    <button id="fminus" type="button" aria-label="縮小字體"><span class="lbl">字體</span>−</button>
+    <button id="fplus" type="button" aria-label="放大字體"><span class="lbl">字體</span>＋</button>
+    <button id="fs" type="button"><span class="lbl">全螢幕</span>⛶</button>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="slide" id="slide-1" data-title="今日目標">
+  <p class="kicker">第 6 週｜學生使用版</p>
+  <h1>巢狀判斷<small>校園闖關點數計算器（五）</small></h1>
+  <p class="lead">這一週<strong>沒有新規則</strong>——結果和上週完全一樣。我們把同一件事換一種寫法：判斷的大括號裡面，再放一個判斷。</p>
+  <div class="goal-grid">
+    <div class="goal"><div class="goal-top"><span class="goal-num">1</span><strong>認識巢狀判斷</strong></div><p>大括號 <span class="fill">{ }</span> 裡面，再放一個 if。</p></div>
+    <div class="goal"><div class="goal-top"><span class="goal-num">2</span><strong>比較兩種寫法</strong></div><p>else if 排一排 vs 巢狀，輸出完全相同。</p></div>
+    <div class="goal"><div class="goal-top"><span class="goal-num">3</span><strong>配對大括號</strong></div><p>每個 if 和 else 的大括號都要正確配對。</p></div>
+    <div class="goal"><div class="goal-top"><span class="goal-num">4</span><strong>記住 else 規則</strong></div><p>else 只跟離它最近的 if 配對。</p></div>
+  </div>
+  <div class="callout"><strong>為什麼重要：</strong>有些規則本來就有「先決條件」——先過關，才分等級。巢狀寫法最貼近這種想法。</div>
+  <p class="hint-line">操作：底部按鈕或鍵盤 ← → 翻頁；手機可左右滑動；內容過長時在當頁向下捲動。</p>
+</section>
+
+<section class="slide" id="slide-2" data-title="先回顧：你還記得嗎？">
+  <p class="kicker">回顧</p>
+  <h1>先回顧：你還記得嗎？</h1>
+  <p>第五週的分級是用 else if 排成一排：</p>
+  <div class="code"><span class="code-lang">C++</span><button class="copy" type="button">複製</button><pre><code><span class="kw">if</span> (totalPoints <span class="hl">>=</span> 90) {
+    cout << <span class="st">"金牌"</span> << endl;
+} <span class="kw">else if</span> (totalPoints <span class="hl">>=</span> 60) {
+    cout << <span class="st">"銀牌"</span> << endl;
+} <span class="kw">else</span> {
+    cout << <span class="st">"未過關"</span> << endl;
+}</code></pre></div>
+  <div class="card">
+    <p><strong>問題一：</strong>輸入 <code class="inline">20 25 18</code>，畫面印出什麼？</p>
+    <details><summary>核對答案</summary><p>總點數 68，印出「銀牌」。</p></details>
+    <p><strong>問題二：</strong>else if 鏈是照什麼順序檢查的？</p>
+    <details><summary>核對答案</summary><p>由上往下檢查，第一個成立的條件贏，後面不再檢查。</p></details>
+  </div>
+</section>
+
+<section class="slide" id="slide-3" data-title="巢狀判斷：大門與門內">
+  <p class="kicker">新概念</p>
+  <h1>巢狀判斷：大門與門內</h1>
+  <div class="card">
+    <p>把「過關」想成一扇<strong>大門</strong>：</p>
+    <ul>
+      <li>總點數 <span class="fill">>= 60</span>：進得了門。<strong>進門之後</strong>，門內再分等級——<span class="fill">>= 90</span> 金牌，否則銀牌。</li>
+      <li>總點數未達 60：連門都進不去，直接印「未過關」。</li>
+    </ul>
+  </div>
+  <p>寫成程式，就是<strong>大括號裡面再放一個 if</strong>：</p>
+  <div class="code"><span class="code-lang">C++</span><button class="copy" type="button">複製</button><pre><code><span class="kw">if</span> (totalPoints <span class="hl">>=</span> 60) {
+    <span class="kw">if</span> (totalPoints <span class="hl">>=</span> 90) {
+        cout << <span class="st">"金牌"</span> << endl;
+    } <span class="kw">else</span> {
+        cout << <span class="st">"銀牌"</span> << endl;
+    }
+} <span class="kw">else</span> {
+    cout << <span class="st">"未過關"</span> << endl;
+}</code></pre></div>
+  <div class="callout"><strong>輸出和第五週一模一樣：</strong>同一件事，兩種寫法。</div>
+</section>
+
+<section class="slide" id="slide-4" data-title="兩種寫法對照">
+  <p class="kicker">對照</p>
+  <h1>兩種寫法，同一個結果</h1>
+  <div class="duo">
+    <div>
+      <div class="duo-label">第五週：else if 排一排</div>
+      <div class="code"><pre><code><span class="kw">if</span> (totalPoints >= 90) {
+    cout << <span class="st">"金牌"</span> << endl;
+} <span class="kw">else if</span> (totalPoints >= 60) {
+    cout << <span class="st">"銀牌"</span> << endl;
+} <span class="kw">else</span> {
+    cout << <span class="st">"未過關"</span> << endl;
+}</code></pre></div>
+    </div>
+    <div>
+      <div class="duo-label">本週：巢狀——大門與門內</div>
+      <div class="code"><pre><code><span class="kw">if</span> (totalPoints >= 60) {
+    <span class="kw">if</span> (totalPoints >= 90) {
+        cout << <span class="st">"金牌"</span> << endl;
+    } <span class="kw">else</span> {
+        cout << <span class="st">"銀牌"</span> << endl;
+    }
+} <span class="kw">else</span> {
+    cout << <span class="st">"未過關"</span> << endl;
+}</code></pre></div>
+    </div>
+  </div>
+  <ul>
+    <li><strong>else if</strong>：條件排成一排，由上往下檢查，第一個成立的贏。</li>
+    <li><strong>巢狀</strong>：先過第一關（進門），才檢查第二關（分等級）。</li>
+  </ul>
+  <div class="callout"><strong>兩種都對：</strong>同一種規則，挑一種好讀的寫。本週練習巢狀，之後你可以自己選。</div>
+</section>
+
+<section class="slide" id="slide-5" data-title="追蹤：68 和 95">
+  <p class="kicker">核心觀念</p>
+  <h1>追蹤：68 和 95 走巢狀路徑</h1>
+  <div class="trace">
+    <div class="trace-head">追蹤一：總點數 68</div>
+    <div class="tstep hit"><span>68 >= 60 ?（大門）</span><span class="verdict">成立 → 進門，繼續檢查</span></div>
+    <div class="tstep miss"><span>68 >= 90 ?（門內）</span><span class="verdict">不成立 → 印「銀牌」</span></div>
+  </div>
+  <div class="trace">
+    <div class="trace-head">追蹤二：總點數 95</div>
+    <div class="tstep hit"><span>95 >= 60 ?（大門）</span><span class="verdict">成立 → 進門，繼續檢查</span></div>
+    <div class="tstep hit"><span>95 >= 90 ?（門內）</span><span class="verdict">成立 → 印「金牌」</span></div>
+  </div>
+  <div class="threshold"><strong>想一想：</strong>巢狀版的銀牌寫在<strong>內層的 else</strong>。總點數 36 為什麼走不到這裡？因為它連大門（≥ 60）都沒過，整個區塊直接跳過。</div>
+  <div class="callout"><strong>記住：</strong>每次執行還是只印一個結果——大門走一邊，門內再走一邊。</div>
+</section>
+
+<section class="slide" id="slide-6" data-title="完整程式：開啟、儲存、執行">
+  <p class="kicker">示範</p>
+  <h1>完整程式：開啟、儲存、執行</h1>
+  <ol>
+    <li>開啟上週已能執行的 Code::Blocks 專案。</li>
+    <li>先將 main.cpp 另存備份，再用下方程式完整取代內容，不要出現兩個 <code class="inline">main()</code>。</li>
+    <li>按 <span class="fill">F9</span>（Build and run）。</li>
+    <li>輸入 <code class="inline">30 30 30</code>，按 Enter；總點數 95，預期印出「金牌」——和第五週一樣。</li>
+  </ol>
+  <div class="code"><span class="code-lang">C++</span><button class="copy" type="button">複製</button><pre><code>#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    int firstPoints, secondPoints, thirdPoints;
+    cin >> firstPoints >> secondPoints >> thirdPoints;
+
+    int taskPoints = firstPoints + secondPoints + thirdPoints;
+    int bonusPoints = 5;
+    int totalPoints = taskPoints + bonusPoints;
+
+    <span class="kw">if</span> (totalPoints <span class="hl">>=</span> 60) {
+        <span class="kw">if</span> (totalPoints <span class="hl">>=</span> 90) {
+            cout << <span class="st">"金牌"</span> << endl;
+        } <span class="kw">else</span> {
+            cout << <span class="st">"銀牌"</span> << endl;
+        }
+    } <span class="kw">else</span> {
+        cout << <span class="st">"未過關"</span> << endl;
+    }
+    return 0;
+}</code></pre></div>
+  <details><summary>畫面沒有反應？</summary><p>游標正在等待時，輸入三個整數，中間用空格分開，再按 Enter。若無法編譯，先看 Build messages 的第一個錯誤——巢狀寫法最常見的錯就是大括號少一個。</p></details>
+</section>
+
+<section class="slide" id="slide-7" data-title="必做：換成巢狀寫法">
+  <p class="kicker">必做</p>
+  <h1>必做：換成巢狀寫法</h1>
+  <div class="card">
+    <p><strong>任務：</strong>沿用上週的程式（三項任務＋固定 5 點獎勵），把 else if 鏈換成巢狀寫法。<strong>輸出必須完全不變。</strong></p>
+    <div class="sample">輸入：<span class="io">30 30 30</span>　輸出：<span class="io">金牌</span><br>輸入：<span class="io">20 25 18</span>　輸出：<span class="io">銀牌</span>（總點數 68）<br>輸入：<span class="io">10 12 9</span>　輸出：<span class="io">未過關</span>（總點數 36）</div>
+  </div>
+  <details><summary>提示：要改哪裡？</summary><p>把 else if 區塊<strong>整個刪掉</strong>，換成巢狀版。計算部分完全不用改。數一數大括號：每個 if 一個、每個 else 一個，開的數量要等於關的數量。</p></details>
+  <details><summary>完成後核對參考程式</summary>
+    <div class="code"><span class="code-lang">C++</span><button class="copy" type="button">複製</button><pre><code>#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    int firstPoints, secondPoints, thirdPoints;
+    cin >> firstPoints >> secondPoints >> thirdPoints;
+
+    int taskPoints = firstPoints + secondPoints + thirdPoints;
+    int bonusPoints = 5;
+    int totalPoints = taskPoints + bonusPoints;
+
+    <span class="kw">if</span> (totalPoints <span class="hl">>=</span> 60) {
+        <span class="kw">if</span> (totalPoints <span class="hl">>=</span> 90) {
+            cout << <span class="st">"金牌"</span> << endl;
+        } <span class="kw">else</span> {
+            cout << <span class="st">"銀牌"</span> << endl;
+        }
+    } <span class="kw">else</span> {
+        cout << <span class="st">"未過關"</span> << endl;
+    }
+    return 0;
+}</code></pre></div>
+  </details>
+</section>
+
+<section class="slide" id="slide-8" data-title="用資料檢查：結果必須一樣">
+  <p class="kicker">測試</p>
+  <h1>用資料檢查：結果必須跟第五週一樣</h1>
+  <p>每組都重新執行一次。這叫<strong>重構</strong>：換寫法，不換結果。八組測資的輸出，必須和第五週完全相同。</p>
+  <div class="table"><table>
+    <tr><th>輸入（三項點數）</th><th>總點數</th><th>畫面印出</th><th>測試目的</th></tr>
+    <tr><td class="num">18 18 18</td><td class="num">59</td><td><span class="tag f">未過關</span></td><td>大門差一點</td></tr>
+    <tr><td class="num">18 18 19</td><td class="num">60</td><td><span class="tag p">銀牌</span></td><td>剛好進門</td></tr>
+    <tr><td class="num">18 18 20</td><td class="num">61</td><td><span class="tag p">銀牌</span></td><td>進門未達金牌</td></tr>
+    <tr><td class="num">28 28 28</td><td class="num">89</td><td><span class="tag p">銀牌</span></td><td>門內差一點</td></tr>
+    <tr><td class="num">28 28 29</td><td class="num">90</td><td><span class="tag g">金牌</span></td><td>門內剛好金牌</td></tr>
+    <tr><td class="num">28 28 30</td><td class="num">91</td><td><span class="tag g">金牌</span></td><td>門內超過一點</td></tr>
+    <tr><td class="num">0 0 0</td><td class="num">5</td><td><span class="tag f">未過關</span></td><td>全部為零</td></tr>
+    <tr><td class="num">100 100 100</td><td class="num">305</td><td><span class="tag g">金牌</span></td><td>範圍上限</td></tr>
+  </table></div>
+  <div class="threshold"><strong>重點：</strong>任何一組和第五週的輸出不同，就代表巢狀的大括號放錯位置了。</div>
+  <div class="sample">自己設計一組：輸入 <span class="fill">＿＿＿＿</span>　預測 <span class="fill">＿＿＿</span>　實際 <span class="fill">＿＿＿</span></div>
+</section>
+
+<section class="slide" id="slide-9" data-title="挑戰：榮譽金牌">
+  <p class="kicker">挑戰</p>
+  <h1>挑戰：榮譽金牌</h1>
+  <p>新規則（選做）：過關者中，90–94 印「金牌」，95 以上印「榮譽金牌」——在金牌的大括號裡面，再放一層判斷。</p>
+  <div class="sample">輸入：<span class="io">30 30 30</span>　輸出：<span class="io">榮譽金牌</span>（總點數 95）<br>輸入：<span class="io">28 28 29</span>　輸出：<span class="io">金牌</span>（總點數 90）<br>輸入：<span class="io">20 25 18</span>　輸出：<span class="io">銀牌</span>（總點數 68）</div>
+  <details><summary>提示</summary><p>在印「金牌」的那個分支裡，再放一個 <code class="inline">if (totalPoints >= 95)</code>：成立印榮譽金牌，否則印金牌。這就是三層巢狀。</p></details>
+  <details><summary>核對參考程式</summary>
+    <div class="code"><span class="code-lang">C++</span><button class="copy" type="button">複製</button><pre><code>#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    int firstPoints, secondPoints, thirdPoints;
+    cin >> firstPoints >> secondPoints >> thirdPoints;
+
+    int taskPoints = firstPoints + secondPoints + thirdPoints;
+    int bonusPoints = 5;
+    int totalPoints = taskPoints + bonusPoints;
+
+    <span class="kw">if</span> (totalPoints <span class="hl">>=</span> 60) {
+        <span class="kw">if</span> (totalPoints <span class="hl">>=</span> 90) {
+            <span class="kw">if</span> (totalPoints <span class="hl">>=</span> 95) {
+                cout << <span class="st">"榮譽金牌"</span> << endl;
+            } <span class="kw">else</span> {
+                cout << <span class="st">"金牌"</span> << endl;
+            }
+        } <span class="kw">else</span> {
+            cout << <span class="st">"銀牌"</span> << endl;
+        }
+    } <span class="kw">else</span> {
+        cout << <span class="st">"未過關"</span> << endl;
+    }
+    return 0;
+}</code></pre></div>
+  </details>
+</section>
+
+<section class="slide" id="slide-10" data-title="else 配錯了">
+  <p class="kicker">除錯</p>
+  <h1>else 配錯了：印出奇怪的結果</h1>
+  <div class="code"><span class="code-lang">C++</span><button class="copy" type="button">複製</button><pre><code><span class="kw">if</span> (totalPoints <span class="hl">>=</span> 60) {
+    <span class="kw">if</span> (totalPoints <span class="hl">>=</span> 90) {
+        cout << <span class="st">"金牌"</span> << endl;
+    } <span class="kw">else</span> {
+        cout << <span class="st">"未過關"</span> << endl;
+    }
+}</code></pre></div>
+  <p>輸入 <code class="inline">20 25 18</code>（總點數 68），畫面印出「未過關」，不是銀牌。輸入 <code class="inline">10 12 9</code>（總點數 36），畫面<strong>什麼都沒印</strong>。哪裡錯了？</p>
+  <details><summary>顯示修正與原因</summary><p><strong>規則：else 只跟離它最近的 if 配對。</strong>這裡的 else 配到的是內層的 <span class="fill">>= 90</span>。68 過了大門、沒過門內這關，就掉進內層的 else 印「未過關」。36 連大門都沒過，整個區塊跳過，所以什麼都不印。</p>
+    <p>修正：銀牌要放在<strong>外層</strong>的 else：</p>
+    <div class="code"><span class="code-lang">C++</span><button class="copy" type="button">複製</button><pre><code>    } <span class="kw">else</span> {
+        cout << <span class="st">"銀牌"</span> << endl;
+    }
+} <span class="kw">else</span> {
+    cout << <span class="st">"未過關"</span> << endl;
+}</code></pre></div>
+  </details>
+  <div class="callout"><strong>巢狀最常見的錯：</strong>大括號配對跑掉。檢查方法——從最內層開始，每個 <span class="fill">{</span> 都往右縮排，關門的 <span class="fill">}</span> 要對齊它的 if。</div>
+</section>
+
+<section class="slide" id="slide-11" data-title="下課前，確認三件事">
+  <p class="kicker">離堂檢核</p>
+  <h1>下課前，確認三件事</h1>
+  <div class="quiz" id="quiz">
+    <fieldset>
+      <legend>1. 總點數 68，在 else 配到內層 if 的錯誤版會印出什麼？</legend>
+      <label><input type="radio" name="q1" value="0">銀牌</label>
+      <label><input type="radio" name="q1" value="1">未過關</label>
+      <label><input type="radio" name="q1" value="0">金牌</label>
+    </fieldset>
+    <fieldset>
+      <legend>2. 「巢狀判斷」是什麼意思？</legend>
+      <label><input type="radio" name="q2" value="0">很多 else if 排成一排</label>
+      <label><input type="radio" name="q2" value="1">大括號裡面再放一個 if</label>
+      <label><input type="radio" name="q2" value="0">把程式分成兩個檔案</label>
+    </fieldset>
+    <fieldset>
+      <legend>3. 總點數 95，在巢狀版（先判斷 ≥60、再判斷 ≥90）印出什麼？</legend>
+      <label><input type="radio" name="q3" value="1">金牌</label>
+      <label><input type="radio" name="q3" value="0">銀牌</label>
+      <label><input type="radio" name="q3" value="0">未過關</label>
+    </fieldset>
+    <div class="quiz-actions">
+      <button class="btn" id="check" type="button">檢查答案</button>
+      <button class="btn ghost" id="reset" type="button">重新作答</button>
+      <span id="feedback" role="status"></span>
+    </div>
+  </div>
+  <div class="callout">請用一句話說明：巢狀版的「銀牌」為什麼寫在內層的 else？</div>
+</section>
+
+</main>
+
+<footer>
+  <div class="progress" aria-hidden="true"><div class="progress-fill" id="pfill"></div></div>
+  <div class="footer-bar">
+    <button id="prev" type="button">← 上一頁</button>
+    <label class="jump-wrap"><span class="sr-only">選擇頁面</span><select id="jump"></select></label>
+    <span id="count"></span>
+    <button id="next" type="button">下一頁 →</button>
+  </div>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var pages=[].slice.call(document.querySelectorAll('.slide')),
+      jump=document.getElementById('jump'),
+      count=document.getElementById('count'),
+      prev=document.getElementById('prev'),
+      next=document.getElementById('next'),
+      pfill=document.getElementById('pfill'),
+      n=0;
+
+  pages.forEach(function(p,i){
+    var o=document.createElement('option');
+    o.value=i;o.textContent=(i+1)+'. '+p.getAttribute('data-title');
+    jump.appendChild(o);
+  });
+
+  function go(i){
+    n=Math.max(0,Math.min(i,pages.length-1));
+    pages.forEach(function(p,k){
+      var on=k===n;
+      p.classList.toggle('active',on);
+      if(on){p.inert=false;}else{p.setAttribute('inert','');}
+    });
+    jump.value=String(n);
+    count.textContent=(n+1)+' / '+pages.length;
+    prev.disabled=n===0;
+    next.disabled=n===pages.length-1;
+    pfill.style.width=(((n+1)/pages.length)*100)+'%';
+    try{history.replaceState(null,'','#slide-'+(n+1));}catch(e){}
+    var m=document.getElementById('main');
+    if(m){m.scrollTop=0;}
+  }
+
+  function fromHash(){
+    var m=location.hash.match(/^#slide-(\d+)$/);
+    go(m?parseInt(m[1],10)-1:0);
+  }
+
+  jump.addEventListener('change',function(){go(parseInt(jump.value,10));});
+  prev.addEventListener('click',function(){go(n-1);});
+  next.addEventListener('click',function(){go(n+1);});
+  window.addEventListener('hashchange',fromHash);
+
+  document.addEventListener('keydown',function(e){
+    var t=e.target;
+    if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;
+    if(e.key==='ArrowLeft'){go(n-1);}
+    else if(e.key==='ArrowRight'){go(n+1);}
+    else if(e.key==='Home'){go(0);}
+    else if(e.key==='End'){go(pages.length-1);}
+  });
+
+  var sx=0,sy=0,st=0;
+  document.addEventListener('touchstart',function(e){
+    if(e.touches.length!==1){sx=null;return;}
+    sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();
+  },{passive:true});
+  document.addEventListener('touchend',function(e){
+    if(sx===null)return;
+    var dx=e.changedTouches[0].clientX-sx,
+        dy=e.changedTouches[0].clientY-sy;
+    sx=null;
+    if(Date.now()-st>800)return;
+    if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.3)return;
+    var src=e.target;
+    while(src&&src!==document.body){
+      if(src.tagName==='PRE'||src.tagName==='SELECT'||src.tagName==='INPUT')return;
+      src=src.parentNode;
+    }
+    go(n+(dx<0?1:-1));
+  },{passive:true});
+
+  [].slice.call(document.querySelectorAll('.copy')).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var pre=btn.parentNode.querySelector('pre');
+      var txt=pre?pre.textContent:'';
+      function done(){btn.textContent='已複製';setTimeout(function(){btn.textContent='複製';},1600);}
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(txt).then(done,function(){fallback();});
+      }else{fallback();}
+      function fallback(){
+        try{
+          var ta=document.createElement('textarea');
+          ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+          document.body.appendChild(ta);ta.select();
+          document.execCommand('copy');document.body.removeChild(ta);done();
+        }catch(err){btn.textContent='複製失敗';}
+      }
+    });
+  });
+
+  var steps=[17,20,23,26],si=1;
+  function applyFont(){document.documentElement.style.fontSize=steps[si]+'px';}
+  document.getElementById('fminus').addEventListener('click',function(){if(si>0){si--;applyFont();}});
+  document.getElementById('fplus').addEventListener('click',function(){if(si<steps.length-1){si++;applyFont();}});
+
+  var fsBtn=document.getElementById('fs');
+  fsBtn.addEventListener('click',function(){
+    try{
+      if(document.fullscreenElement){document.exitFullscreen();}
+      else if(document.documentElement.requestFullscreen){document.documentElement.requestFullscreen();}
+      else{fsBtn.disabled=true;}
+    }catch(e){fsBtn.disabled=true;}
+  });
+
+  var check=document.getElementById('check'),
+      reset=document.getElementById('reset'),
+      fb=document.getElementById('feedback');
+  if(check){
+    check.addEventListener('click',function(){
+      var score=0,total=0;
+      ['q1','q2','q3'].forEach(function(name){
+        var opts=[].slice.call(document.querySelectorAll('input[name="'+name+'"]'));
+        if(!opts.length)return;total++;
+        opts.forEach(function(o){
+          o.parentNode.style.background='';
+          if(o.checked&&o.value==='1'){score++;}
+        });
+      });
+      fb.className='';
+      if(score===total){fb.textContent='全部答對，你可以下課了。';fb.className='ok';}
+      else{fb.textContent='答對 '+score+' / '+total+' 題，再核對一次頁面上的重點。';fb.className='no';}
+    });
+    reset.addEventListener('click',function(){
+      [].slice.call(document.querySelectorAll('#quiz input[type=radio]')).forEach(function(o){o.checked=false;});
+      fb.textContent='';fb.className='';
+    });
+  }
+
+  fromHash();
+})();
+</script>
+</body>
+</html>
