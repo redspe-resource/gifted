@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第 8 週｜while 迴圈（教師講義版）</title>
+<style>
+:root{
+  --bg:#f5f2ec; --surface:#ffffff; --surface-2:#faf8f4;
+  --ink:#1d2b3a; --ink-soft:#43566b; --ink-faint:#6b7a8c;
+  --teal:#0d6e6a; --teal-deep:#0a4f4c; --teal-tint:#e0efed; --teal-line:#b7d9d6;
+  --amber:#a05a0a; --amber-tint:#fbeed9; --amber-line:#e6cfa4;
+  --pass:#256b34; --pass-tint:#e3f1e4; --fail:#a3362c; --fail-tint:#fae5e2;
+  --code-bg:#132535; --code-ink:#eaf2f7;
+  --border:#ddd6c8; --divider:#e7e2d7;
+  --radius:14px;
+  --shadow:0 1px 2px rgba(29,43,58,.05),0 4px 14px rgba(29,43,58,.06);
+  --font-body:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,-apple-system,sans-serif;
+  --font-code:Consolas,"Courier New","Microsoft JhengHei",monospace;
+}
+*{box-sizing:border-box}
+html{font-size:20px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.7}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px;border-radius:6px}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+
+/* ── app shell ─────────────────────────── */
+.app{height:100vh;height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto}
+header{background:linear-gradient(135deg,#12333f,#0d4a48);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:.8em;padding:.55em 1.2em;box-shadow:0 2px 10px rgba(18,51,63,.25)}
+.brand{display:flex;align-items:center;gap:.7em;min-width:0}
+.brand-mark{flex:none;width:2.2em;height:2.2em;border-radius:.6em;background:rgba(255,255,255,.14);display:grid;place-items:center;font-size:.9em;font-weight:700;letter-spacing:.05em}
+.brand-text{min-width:0}
+.brand-week{font-size:.72em;font-weight:700;letter-spacing:.14em;color:#9fd6cf;text-transform:uppercase}
+.brand-title{font-size:.95em;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tools{display:flex;align-items:center;gap:.4em;flex:none}
+.tools button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:.55em;padding:.3em .65em;font-size:.8em;cursor:pointer;transition:background .18s}
+.tools button:hover{background:rgba(255,255,255,.25)}
+
+main{min-height:0;overflow:auto;padding:1.4em 1.2em 2.6em;scrollbar-width:thin}
+.slide{display:none;max-width:60em;margin:0 auto}
+.slide.active{display:block}
+
+footer{background:#12333f;color:#fff}
+.progress{height:.28em;background:rgba(255,255,255,.18)}
+.progress-fill{height:100%;width:0;background:linear-gradient(90deg,#2fb3a6,#e8b04b);border-radius:0 99em 99em 0;transition:width .25s ease}
+.footer-bar{display:flex;align-items:center;justify-content:space-between;gap:.6em;padding:.55em 1.2em;flex-wrap:wrap}
+.footer-bar button{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:.55em;padding:.35em .8em;font-size:.85em;cursor:pointer;transition:background .18s}
+.footer-bar button:hover:not(:disabled){background:rgba(255,255,255,.28)}
+.footer-bar button:disabled{opacity:.35;cursor:default}
+.jump-wrap{flex:1;min-width:8em;max-width:22em}
+.jump-wrap select{width:100%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:.55em;padding:.35em .5em;font-size:.8em;cursor:pointer}
+.jump-wrap select option{color:#1d2b3a;background:#fff}
+#count{font-size:.8em;color:#bcd9d6;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ── slide content ─────────────────────── */
+.kicker{font-size:.72em;font-weight:700;letter-spacing:.18em;color:var(--teal);margin:0 0 .6em}
+.kicker::before{content:"";display:inline-block;width:1.6em;height:.22em;background:var(--teal);border-radius:99em;margin-right:.55em;vertical-align:middle}
+h1{font-size:1.75em;line-height:1.3;margin:0 0 .65em;color:#16334a;text-wrap:balance}
+h1 small{display:block;font-size:.55em;font-weight:500;color:var(--ink-faint);margin-top:.35em;letter-spacing:.04em}
+p{margin:.7em 0}
+.lead{font-size:1.12em}
+.hint-line{font-size:.75em;color:var(--ink-faint);margin-top:1.6em}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:1.1em 1.25em;margin:1em 0}
+.card > :first-child{margin-top:0}
+.card > :last-child{margin-bottom:0}
+
+.goal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(13em,1fr));gap:.8em;margin:1.2em 0}
+.goal{background:var(--surface);border:1px solid var(--border);border-left:.4em solid var(--teal);border-radius:12px;padding:.85em 1em;box-shadow:var(--shadow)}
+.goal-top{display:flex;align-items:center;gap:.55em;margin-bottom:.3em}
+.goal-num{flex:none;width:1.55em;height:1.55em;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;font-size:.75em;font-weight:700}
+.goal strong{font-size:.92em}
+.goal p{margin:.15em 0 0;font-size:.8em;color:var(--ink-soft);line-height:1.6}
+
+.callout{background:var(--teal-tint);border:1px solid var(--teal-line);border-left:.4em solid var(--teal);border-radius:12px;padding:.9em 1.1em;margin:1.1em 0;font-size:.95em}
+.callout strong{color:var(--teal-deep)}
+.note{background:#f8f0fa;border:1px solid #dcc6ea;border-left:.4em solid #8a4fb8;border-radius:12px;padding:.9em 1.1em;margin:1.1em 0;font-size:.8em;color:#4d3a60}
+.note strong{color:#6d3a99}
+
+.threshold{background:var(--amber-tint);border:1px solid var(--amber-line);border-left:.4em solid var(--amber);border-radius:12px;padding:.9em 1.1em;margin:1.1em 0;font-size:.95em}
+.threshold strong{color:var(--amber)}
+.sample{background:var(--surface-2);border:1px dashed var(--border);border-radius:12px;padding:.85em 1.1em;margin:1.1em 0;font-size:.9em}
+.sample .io{font-family:var(--font-code);font-size:.95em;background:#fff;border:1px solid var(--border);border-radius:8px;padding:.35em .7em;display:inline-block;margin:.2em .3em .2em 0}
+
+/* number line */
+.numline{margin:1.4em 0;display:flex;align-items:stretch;gap:0}
+.nl-zone{flex:1;display:flex;align-items:center;justify-content:center;gap:.9em;padding:.9em .4em;font-family:var(--font-code);font-size:1em}
+.nl-zone.no{background:var(--fail-tint);border:1px solid #e8bcb6;border-radius:12px 0 0 12px;color:var(--fail)}
+.nl-zone.yes{background:var(--pass-tint);border:1px solid #bcd8bd;border-radius:0 12px 12px 0;color:var(--pass)}
+.nl-zone em{font-family:var(--font-body);font-style:normal;font-weight:700;font-size:.78em}
+.nl-mark{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2em;background:var(--amber);color:#fff;font-weight:700;padding:.55em .95em;margin:0 -.35em;z-index:1;box-shadow:0 4px 12px rgba(160,90,10,.35);border-radius:10px}
+.nl-mark b{font-family:var(--font-code);font-size:1.25em;line-height:1}
+.nl-mark span{font-size:.62em;letter-spacing:.1em}
+
+/* if/else branch */
+.branch{margin:1.3em 0;text-align:center}
+.branch-q{display:inline-block;background:#16334a;color:#fff;border-radius:99em;padding:.45em 1.3em;font-family:var(--font-code);font-size:.95em;box-shadow:var(--shadow)}
+.branch-q::before{content:"if ("}.branch-q::after{content:")"}
+.branch-paths{display:grid;grid-template-columns:1fr 1fr;gap:.8em;margin-top:1em}
+.path{border-radius:12px;padding:.8em .9em;text-align:center;border:1px solid}
+.path .path-label{display:inline-block;font-weight:700;font-size:.8em;border-radius:99em;padding:.15em .95em;margin-bottom:.45em}
+.path.yes{background:var(--pass-tint);border-color:#bcd8bd}
+.path.yes .path-label{background:var(--pass);color:#fff}
+.path.no{background:var(--fail-tint);border-color:#e8bcb6}
+.path.no .path-label{background:var(--fail);color:#fff}
+.path-body{font-family:var(--font-code);font-size:.95em}
+
+/* rule chips */
+.rule-demo{display:grid;grid-template-columns:repeat(auto-fit,minmax(10em,1fr));gap:.8em;margin:1.2em 0}
+.rule-item{border-radius:12px;padding:.9em 1em;text-align:center;border:1px solid}
+.rule-item .rule-pts{display:block;font-family:var(--font-code);font-size:1.5em;font-weight:700;line-height:1.1}
+.rule-item .rule-word{display:inline-block;margin-top:.4em;font-weight:700;font-size:.85em;border-radius:99em;padding:.2em 1em;color:#fff}
+.rule-item.pass{background:var(--pass-tint);border-color:#bcd8bd}
+.rule-item.pass .rule-word{background:var(--pass)}
+.rule-item.fail{background:var(--fail-tint);border-color:#e8bcb6}
+.rule-item.fail .rule-word{background:var(--fail)}
+.rule-item small{display:block;font-size:.7em;color:var(--ink-faint);margin-top:.45em}
+
+/* code block */
+.code{position:relative;background:var(--code-bg);border-radius:var(--radius);margin:1.1em 0;box-shadow:var(--shadow);overflow:hidden}
+.code-lang{position:absolute;left:.9em;top:.7em;font-size:.62em;font-weight:700;letter-spacing:.16em;color:#7fb8c9;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:99em;padding:.2em .8em}
+.copy{position:absolute;right:.7em;top:.6em;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#eaf2f7;border-radius:8px;padding:.25em .7em;font-size:.68em;cursor:pointer;transition:background .18s}
+.copy:hover{background:rgba(255,255,255,.22)}
+.code pre{overflow:auto;color:var(--code-ink);padding:2.6em 1.2em 1.1em;margin:0;font-family:var(--font-code);font-size:.88em;line-height:1.65;-webkit-overflow-scrolling:touch}
+.code pre code{font:inherit}
+.code .hl{color:#e8b04b}
+.code .kw{color:#6fd3c5}
+.code .st{color:#f4a4a0}
+
+/* table */
+.table{overflow:auto;margin:1.1em 0;border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;background:var(--surface);font-size:.88em}
+td,th{border-bottom:1px solid var(--divider);padding:.65em .85em;text-align:left;vertical-align:top}
+th{background:#eef3f0;color:#16334a;font-size:.92em;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td.num,th.num{font-family:var(--font-code);white-space:nowrap}
+td .tag{display:inline-block;font-size:.78em;font-weight:700;border-radius:6px;padding:.08em .55em}
+td .tag.p{background:var(--pass-tint);color:var(--pass)}
+td .tag.f{background:var(--fail-tint);color:var(--fail)}
+td .tag.g{background:#f9f0d2;color:#6d5400}
+
+/* details */
+details{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin:.8em 0;box-shadow:var(--shadow);overflow:hidden}
+summary{cursor:pointer;font-weight:700;padding:.8em 1.1em;display:flex;align-items:center;gap:.55em;font-size:.92em;color:var(--teal-deep);background:var(--surface-2);border-bottom:1px solid transparent;list-style:none;user-select:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"＋";flex:none;width:1.5em;height:1.5em;border-radius:50%;background:var(--teal-tint);color:var(--teal-deep);display:grid;place-items:center;font-weight:700;font-size:.85em;transition:transform .18s}
+details[open] summary::before{content:"－"}
+details[open] summary{border-bottom-color:var(--divider)}
+details > div, details > p{padding:.9em 1.15em;margin:0}
+details > :last-child{padding-bottom:1.05em}
+details .code{margin:.6em 0}
+
+
+/* tier + trace (week5) */
+.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5em,1fr));gap:.7em;margin:1.1em 0}
+.tier{border-radius:12px;padding:.85em 1em;text-align:center;border:1px solid}
+.tier b{display:block;font-size:1.08em}
+.tier .rng{display:block;font-size:.82em;margin-top:.25em}
+.tier small{display:block;color:var(--ink-faint);font-size:.72em;margin-top:.35em}
+.tier.gold{background:#f9f0d2;border-color:#e0cc93;color:#6d5400}
+.tier.silver{background:#e9edf3;border-color:#c4cfdd;color:#3d4c66}
+.tier.none{background:var(--fail-tint);border-color:#e8bcb6;color:var(--fail)}
+.trace{margin:1em 0}
+.trace-head{font-weight:700;margin:.9em 0 .4em}
+.tstep{display:flex;align-items:center;justify-content:space-between;gap:.8em;border-radius:10px;padding:.55em .95em;border:1px solid;font-family:var(--font-code);font-size:.88em;margin:.45em 0;flex-wrap:wrap}
+.tstep .verdict{font-family:var(--font-body);font-weight:700;font-size:.85em;white-space:nowrap}
+.tstep.miss{background:var(--surface-2);border-color:var(--border);color:var(--ink-soft)}
+.tstep.miss .verdict{color:var(--fail)}
+.tstep.hit{background:var(--pass-tint);border-color:#bcd8bd;color:var(--pass)}
+.tstep.hit .verdict{color:var(--pass)}
+
+/* duo comparison (week6) */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:.8em;margin:1.1em 0}
+.duo .code{margin:.4em 0}
+.duo-label{font-weight:700;font-size:.9em;margin-bottom:.35em;color:var(--teal-deep)}
+@media (max-width:900px){.duo{grid-template-columns:1fr}}
+
+/* for-parts (week7) + duo mobile fix */
+.duo>div{min-width:0}
+.for-parts{display:grid;grid-template-columns:repeat(3,1fr);gap:.6em;margin:1.1em 0}
+.for-part{background:#fff;border:1px solid var(--line);border-radius:12px;padding:.7em .8em;text-align:center;box-shadow:var(--shadow)}
+.for-part b{display:block;color:var(--teal-deep);margin-bottom:.25em;font-size:.9em}
+.for-part code{font-family:var(--font-code);font-size:.92em}
+@media (max-width:640px){.for-parts{grid-template-columns:1fr}}
+/* quiz */
+.quiz{margin:1em 0}
+.quiz fieldset{border:1px solid var(--border);border-radius:12px;margin:.8em 0;background:var(--surface);box-shadow:var(--shadow);padding:0;overflow:hidden}
+.quiz legend{font-weight:700;padding:.75em 1.05em .45em;font-size:.92em;width:100%}
+.quiz label{display:flex;align-items:flex-start;gap:.55em;padding:.5em 1.05em;cursor:pointer;font-size:.88em;border-top:1px solid var(--divider);margin:0;transition:background .15s}
+.quiz label:hover{background:var(--surface-2)}
+.quiz input{margin-top:.32em;accent-color:var(--teal);flex:none}
+.quiz-actions{display:flex;align-items:center;gap:.7em;flex-wrap:wrap;margin-top:.6em}
+.btn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:.55em 1.25em;font-weight:700;font-size:.9em;cursor:pointer;box-shadow:var(--shadow);transition:background .18s}
+.btn:hover{background:var(--teal-deep)}
+.btn.ghost{background:transparent;color:var(--teal-deep);border:1px solid var(--teal-line);box-shadow:none}
+#feedback{font-weight:700;font-size:.9em}
+#feedback.ok{color:var(--pass)}
+#feedback.no{color:var(--fail)}
+
+ol,ul{padding-left:1.5em}
+li{margin:.4em 0}
+code.inline{background:#eef0e9;border:1px solid var(--border);border-radius:6px;padding:.08em .4em;font-family:var(--font-code);font-size:.9em}
+
+.fill{font-family:var(--font-code);letter-spacing:.06em}
+
+@media (max-width:640px){
+  html{font-size:17px}
+  .brand-title{font-size:.85em}
+  .tools button .lbl{display:none}
+  main{padding:1em .85em 2.2em}
+  .branch-paths{grid-template-columns:1fr}
+  .nl-zone{flex-wrap:wrap}
+  .footer-bar{flex-wrap:nowrap;gap:.45em}
+  .footer-bar button{padding:.35em .5em;font-size:.78em;white-space:nowrap}
+  .jump-wrap{min-width:0}
+  #count{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">W8</div>
+    <div class="brand-text">
+      <div class="brand-week">第 8 週｜Code::Blocks・C++</div>
+      <div class="brand-title">while 迴圈：不知道幾次的時候</div>
+    </div>
+  </div>
+  <div class="tools">
+    <button id="fminus" type="button" aria-label="縮小字體"><span class="lbl">字體</span>−</button>
+    <button id="fplus" type="button" aria-label="放大字體"><span class="lbl">字體</span>＋</button>
+    <button id="fs" type="button"><span class="lbl">全螢幕</span>⛶</button>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="slide" id="slide-1" data-title="今日目標">
+  <p class="kicker">第 8 週｜教師講義版</p>
+  <h1>while 迴圈<small>校園闖關點數計算器（七）</small></h1>
+  <p class="lead">上週的 for 迴圈有個前提：<strong>先知道要做幾圈</strong>。這一週反過來——想玩幾關就玩幾關，程式自己等到<strong>結束訊號</strong>出現才停。</p>
+  <div class="goal-grid">
+    <div class="goal"><div class="goal-top"><span class="goal-num">1</span><strong>認識 while 迴圈</strong></div><p>條件成立就一直做，做到不成立為止。</p></div>
+    <div class="goal"><div class="goal-top"><span class="goal-num">2</span><strong>學會哨兵值</strong></div><p>用 -1 當「結束訊號」，不是點數。</p></div>
+    <div class="goal"><div class="goal-top"><span class="goal-num">3</span><strong>讀兩次的模式</strong></div><p>進迴圈前讀一次、迴圈裡再讀一次。</p></div>
+    <div class="goal"><div class="goal-top"><span class="goal-num">4</span><strong>條件要會變</strong></div><p>條件裡的變數，每圈都要換新值。</p></div>
+  </div>
+  <div class="callout"><strong>為什麼重要：</strong>真實的程式常常「不知道會輸入幾個」——問卷、遊戲、感測器都是。while 是這種情況的標準工具。</div>
+  <p class="hint-line">操作：底部按鈕或鍵盤 ← → 翻頁；手機可左右滑動；內容過長時在當頁向下捲動。</p>
+<aside class="note"><strong>備課與帶領：</strong>0–2 分鐘。開場對比：上週迴圈「知道幾圈」，這週迴圈「做到訊號出現」。新語法只有 while 那一行，難的是讀兩次的模式。</aside></section>
+
+<section class="slide" id="slide-2" data-title="先回顧：你還記得嗎？">
+  <p class="kicker">回顧</p>
+  <h1>先回顧：你還記得嗎？</h1>
+  <p>第七週用 for 迴圈讀三關：</p>
+  <div class="code"><span class="code-lang">C++</span><button class="copy" type="button">複製</button><pre><code><span class="kw">int</span> points;
+<span class="kw">int</span> taskPoints = 0;
+<span class="kw">for</span> (<span class="kw">int</span> i = 1; i <span class="hl"><=</span> <span class="hl">3</span>; <span class="hl">i++</span>) {
+    cin >> points;
+    taskPoints = taskPoints + points;
+}</code></pre></div>
+  <div class="card">
+    <p><strong>問題一：</strong>輸入 <code class="inline">20 25 18</code>，taskPoints 是多少？</p>
+    <details><summary>核對答案</summary><p>63。迴圈跑 3 圈，0 → 20 → 45 → 63。</p></details>
+    <p><strong>問題二：</strong>如果今天<strong>不知道有幾關</strong>——想玩幾關玩幾關——for 迴圈卡在哪裡？</p>
+    <details><summary>核對答案</summary><p>for 要先寫好 <code class="inline">i &lt;= 3</code>，一定要先知道幾圈。關卡數不固定時，我們需要「做到訊號出現為止」的迴圈。</p></details>
+  </div>
+<aside class="note"><strong>備課與帶領：</strong>0–5 分鐘。回顧 for 版，直接問「不知道有幾關怎麼辦」。讓學生卡一下——這個卡點就是本週的動機。</aside></section>
+
+<section class="slide" id="slide-3" data-title="新概念：while 與哨兵值">
+  <p class="kicker">新概念</p>
+  <h1>while 迴圈與哨兵值</h1>
+  <p>while 的規則比 for 更簡單：<strong>條件成立就做，做完再檢查一次，直到不成立</strong>。</p>
+  <div class="code"><span class="code-lang">C++</span><button class="copy" type="button">複製</button><pre><code>cin >> points;                       // 先讀一次
+<span class="kw">while</span> (points <span class="hl">!= -1</span>) {              // 不是訊號，就做
+    taskPoints = taskPoints + points;
+    cin >> points;                   // 讀下一個
+}</code></pre></div>
+  <ul>
+    <li><strong>哨兵值 -1</strong>：它不是點數，是「我玩完了」的訊號。跟 i 一樣，是「不是資料的資料」。</li>
+    <li><strong>為什麼要先讀一次？</strong>條件第一次檢查時，points 要已經有值。迴圈結束前再讀一次，拿下一個輸入來更新條件。</li>
+    <li><strong>條件裡的變數必須變</strong>：points 每圈都換新值。如果條件裡的變數永遠不變，迴圈永遠不會停。</li>
+  </ul>
+  <div class="callout"><strong>讀兩次，是 while 最容易錯的地方：</strong>進迴圈前一次、迴圈裡一次。兩個 cin，一個都不能少。</div>
+<aside class="note"><strong>備課與帶領：</strong>5–10 分鐘。while 結構＋哨兵值。強調 -1 是「不是資料的資料」，跟 i 是計數器同一族概念。「讀兩次」在黑板標出兩個 cin。</aside></section>
+
+<section class="slide" id="slide-4" data-title="兩種寫法對照">
+  <p class="kicker">對照</p>
+  <h1>for vs while，同一件事</h1>
+  <div class="duo">
+    <div>
+      <div class="duo-label">第七週：for（固定 3 關）</div>
+      <div class="code"><pre><code>int points;
+int taskPoints = 0;
+for (int i = 1; i &lt;= 3; i++) {
+    cin >> points;
+    taskPoints = taskPoints
+        + points;
+}</code></pre></div>
+    </div>
+    <div>
+      <div class="duo-label">本週：while（-1 結束）</div>
+      <div class="code"><pre><code>int points;
+int taskPoints = 0;
+cin >> points;
+while (points != -1) {
+    taskPoints = taskPoints
+        + points;
+    cin >> points;
+}</code></pre></div>
+    </div>
+  </div>
+  <ul>
+    <li><strong>for：</strong>計數器 i 掌控一切，圈數寫在第一行。</li>
+    <li><strong>while：</strong>沒有 i、沒有圈數——「什麼時候停」交給輸入的 -1 決定。</li>
+  </ul>
+  <div class="callout"><strong>兩個 cin 是關鍵差別：</strong>for 版 cin 在迴圈裡一個就夠；while 版要「先讀、再做、再讀」。</div>
+<aside class="note"><strong>備課與帶領：</strong>10–14 分鐘。並排對照。讓學生指出：哪裡多一行、哪裡少了 i。問：兩個 cin 各自的工作是什麼？</aside></section>
+
+<section class="slide" id="slide-5" data-title="追蹤：四次條件檢查">
+  <p class="kicker">核心觀念</p>
+  <h1>追蹤：輸入 20 25 18 -1</h1>
+  <p>跟著 points 一步一步走：</p>
+  <div class="trace">
+    <div class="trace-head">while 條件的四次檢查</div>
+    <div class="tstep hit"><span>檢查 1：points = 20，20 != -1</span><span class="verdict">成立 → 加總 0→20，再讀到 25</span></div>
+    <div class="tstep hit"><span>檢查 2：points = 25，25 != -1</span><span class="verdict">成立 → 加總 20→45，再讀到 18</span></div>
+    <div class="tstep hit"><span>檢查 3：points = 18，18 != -1</span><span class="verdict">成立 → 加總 45→63，再讀到 -1</span></div>
+    <div class="tstep miss"><span>檢查 4：points = -1，-1 != -1</span><span class="verdict">不成立 → 離開迴圈</span></div>
+  </div>
+  <div class="threshold"><strong>想一想：</strong>-1 被加進 taskPoints 了嗎？</div>
+  <div class="callout"><strong>沒有。</strong>迴圈先檢查再加總——-1 在檢查時就被擋在門外，根本進不了加總那行。</div>
+<aside class="note"><strong>備課與帶領：</strong>14–18 分鐘。追蹤 20 25 18 -1，重點放在第四次檢查——-1 在門口就被擋下。要聽到「條件裡的變數每圈換新值」。</aside></section>
+
+<section class="slide" id="slide-6" data-title="完整程式：開啟、儲存、執行">
+  <p class="kicker">示範</p>
+  <h1>完整程式：開啟、儲存、執行</h1>
+  <ol>
+    <li>開啟上週已能執行的 Code::Blocks 專案。</li>
+    <li>先將 main.cpp 另存備份，再用下方程式完整取代內容，不要出現兩個 <code class="inline">main()</code>。</li>
+    <li>按 <span class="fill">F9</span>（Build and run）。</li>
+    <li>輸入 <code class="inline">30 30 30 -1</code>，按 Enter；總點數 95，預期印出「金牌」——和以前一樣。</li>
+  </ol>
+  <div class="code"><span class="code-lang">C++</span><button class="copy" type="button">複製</button><pre><code>#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    int points;
+    int taskPoints = 0;
+
+    cin >> points;
+    <span class="kw">while</span> (points <span class="hl">!= -1</span>) {
+        taskPoints = taskPoints + points;
+        cin >> points;
+    }
+
+    int bonusPoints = 5;
+    int totalPoints = taskPoints + bonusPoints;
+
+    <span class="kw">if</span> (totalPoints <span class="hl">>=</span> 60) {
+        <span class="kw">if</span> (totalPoints <span class="hl">>=</span> 90) {
+            cout << <span class="st">"金牌"</span> << endl;
+        } <span class="kw">else</span> {
+            cout << <span class="st">"銀牌"</span> << endl;
+        }
+    } <span class="kw">else</span> {
+        cout << <span class="st">"未過關"</span> << endl;
+    }
+    return 0;
+}</code></pre></div>
+  <details><summary>畫面沒有反應？</summary><p>游標正在等待時，輸入點數，最後加上 -1，中間用空格分開，再按 Enter。若程式一直不動，檢查迴圈裡的 cin——少了它就會變成無窮迴圈。</p></details>
+<aside class="note"><strong>備課與帶領：</strong>18–21 分鐘。示範 30 30 30 -1 → 金牌。提醒輸入最後一定要 -1，否則程式會一直等。</aside></section>
+
+<section class="slide" id="slide-7" data-title="必做：換成 while 版">
+  <p class="kicker">必做</p>
+  <h1>必做：換成 while 版</h1>
+  <div class="card">
+    <p><strong>任務：</strong>把讀取部分換成 while 迴圈＋哨兵值 -1。<strong>計算和分級一行都不用改，輸出必須完全不變。</strong></p>
+    <div class="sample">輸入：<span class="io">30 30 30 -1</span>　輸出：<span class="io">金牌</span><br>輸入：<span class="io">20 25 18 -1</span>　輸出：<span class="io">銀牌</span>（總點數 68）<br>輸入：<span class="io">10 12 9 -1</span>　輸出：<span class="io">未過關</span>（總點數 36）</div>
+  </div>
+  <details><summary>提示：要改哪裡？</summary><p>把 for 那段刪掉，換成「先讀、while、加總、再讀」。口訣：<strong>先讀一次進迴圈，加總之後再讀一次</strong>。兩個 cin，一個都不能少。</p></details>
+  <details><summary>完成後核對參考程式</summary>
+    <div class="code"><span class="code-lang">C++</span><button class="copy" type="button">複製</button><pre><code>#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    int points;
+    int taskPoints = 0;
+
+    cin >> points;
+    <span class="kw">while</span> (points <span class="hl">!= -1</span>) {
+        taskPoints = taskPoints + points;
+        cin >> points;
+    }
+
+    int bonusPoints = 5;
+    int totalPoints = taskPoints + bonusPoints;
+
+    <span class="kw">if</span> (totalPoints <span class="hl">>=</span> 60) {
+        <span class="kw">if</span> (totalPoints <span class="hl">>=</span> 90) {
+            cout << <span class="st">"金牌"</span> << endl;
+        } <span class="kw">else</span> {
+            cout << <span class="st">"銀牌"</span> << endl;
+        }
+    } <span class="kw">else</span> {
+        cout << <span class="st">"未過關"</span> << endl;
+    }
+    return 0;
+}</code></pre></div>
+  </details>
+<aside class="note"><strong>備課與帶領：</strong>21–31 分鐘。必做。最常見錯：迴圈裡忘了 cin（無窮迴圈）、條件打錯。巡視問：你的 points 現在是幾？</aside></section>
+
+<section class="slide" id="slide-8" data-title="用資料檢查：結果必須一樣">
+  <p class="kicker">測試</p>
+  <h1>用資料檢查：結果必須跟以前一樣</h1>
+  <p>每組都重新執行一次（記得最後加上 -1）。這是第四次「換寫法、不換結果」的<strong>重構</strong>驗證。</p>
+  <div class="table"><table>
+    <tr><th>輸入（點數，-1 結束）</th><th>總點數</th><th>畫面印出</th><th>測試目的</th></tr>
+    <tr><td class="num">18 18 18 -1</td><td class="num">59</td><td><span class="tag f">未過關</span></td><td>差一點過關</td></tr>
+    <tr><td class="num">18 18 19 -1</td><td class="num">60</td><td><span class="tag p">銀牌</span></td><td>剛好過關</td></tr>
+    <tr><td class="num">18 18 20 -1</td><td class="num">61</td><td><span class="tag p">銀牌</span></td><td>過關未達金牌</td></tr>
+    <tr><td class="num">28 28 28 -1</td><td class="num">89</td><td><span class="tag p">銀牌</span></td><td>差一點金牌</td></tr>
+    <tr><td class="num">28 28 29 -1</td><td class="num">90</td><td><span class="tag g">金牌</span></td><td>剛好金牌</td></tr>
+    <tr><td class="num">28 28 30 -1</td><td class="num">91</td><td><span class="tag g">金牌</span></td><td>超過一點</td></tr>
+    <tr><td class="num">0 0 0 -1</td><td class="num">5</td><td><span class="tag f">未過關</span></td><td>0 是點數，不是訊號</td></tr>
+    <tr><td class="num">100 100 100 -1</td><td class="num">305</td><td><span class="tag g">金牌</span></td><td>範圍上限</td></tr>
+  </table></div>
+  <div class="threshold"><strong>重點：</strong>任何一組跟以前不一樣，先檢查哨兵是不是 -1、迴圈裡的 cin 有沒有少。</div>
+  <div class="sample">自己設計一組：輸入 <span class="fill">＿＿＿＿＿</span>　預測 <span class="fill">＿＿＿</span>　實際 <span class="fill">＿＿＿</span></div>
+<aside class="note"><strong>備課與帶領：</strong>31–36 分鐘。八組測資加 -1——第四次重構驗證。特別注意 0 0 0 -1 這組：0 是點數，別讓它被誤當訊號。</aside></section>
+
+<section class="slide" id="slide-9" data-title="挑戰：印出共幾關">
+  <p class="kicker">挑戰</p>
+  <h1>挑戰：印出共玩了幾關</h1>
+  <p>新任務（選做）：程式最後多印一行「共 X 關」。while 沒有 i 幫你數——<strong>自己放一個計數器進去</strong>。</p>
+  <div class="sample">輸入：<span class="io">30 30 30 -1</span>　輸出：<span class="io">共 3 關</span>　<span class="io">金牌</span><br>輸入：<span class="io">20 20 20 20 -1</span>　輸出：<span class="io">共 4 關</span>　<span class="io">銀牌</span>（總點數 85）<br>輸入：<span class="io">12 -1</span>　輸出：<span class="io">共 1 關</span>　<span class="io">未過關</span>（總點數 17）</div>
+  <details><summary>提示</summary><p>宣告 <code class="inline">int roundCount = 0;</code>，在迴圈裡加總之後放一行 <code class="inline">roundCount = roundCount + 1;</code>。離開迴圈後，先用 cout 印出它，再印分級結果。</p></details>
+  <details><summary>核對參考程式</summary>
+    <div class="code"><span class="code-lang">C++</span><button class="copy" type="button">複製</button><pre><code>#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    int points;
+    int taskPoints = 0;
+    int roundCount = 0;
+
+    cin >> points;
+    <span class="kw">while</span> (points <span class="hl">!= -1</span>) {
+        taskPoints = taskPoints + points;
+        roundCount = roundCount + <span class="hl">1</span>;
+        cin >> points;
+    }
+
+    int bonusPoints = 5;
+    int totalPoints = taskPoints + bonusPoints;
+
+    cout << <span class="st">"共 "</span> << roundCount << <span class="st">" 關"</span> << endl;
+
+    <span class="kw">if</span> (totalPoints <span class="hl">>=</span> 60) {
+        <span class="kw">if</span> (totalPoints <span class="hl">>=</span> 90) {
+            cout << <span class="st">"金牌"</span> << endl;
+        } <span class="kw">else</span> {
+            cout << <span class="st">"銀牌"</span> << endl;
+        }
+    } <span class="kw">else</span> {
+        cout << <span class="st">"未過關"</span> << endl;
+    }
+    return 0;
+}</code></pre></div>
+  </details>
+  <div class="callout"><strong>看出來了嗎？</strong>for 迴圈的 i，原來就是一個自動幫你加一的計數器——你剛剛用手動把它做出來了。</div>
+<aside class="note"><strong>備課與帶領：</strong>選做。roundCount 計數器。做完追問：「for 的 i 是什麼？」——讓學生自己說出「自動加一的計數器」，兩週正式接軌。</aside></section>
+
+<section class="slide" id="slide-10" data-title="條件寫錯了">
+  <p class="kicker">除錯</p>
+  <h1>條件寫錯了：0 關卡提前結束</h1>
+  <div class="code"><span class="code-lang">C++</span><button class="copy" type="button">複製</button><pre><code>cin >> points;
+<span class="kw">while</span> (points <span class="hl">> 0</span>) {
+    taskPoints = taskPoints + points;
+    cin >> points;
+}</code></pre></div>
+  <p>輸入 <code class="inline">30 0 30 -1</code>（預期總點數 65、銀牌），畫面印出「未過關」。哪裡錯了？</p>
+  <details><summary>顯示修正與原因</summary><p><strong>條件寫成 points > 0，0 也被當成訊號了。</strong>第 2 個輸入是 0，不大於 0，迴圈提前結束：只加到 30，總點數 35 → 未過關。</p>
+    <p>修正：條件改回 <code class="inline">points != -1</code>。<strong>口訣：哨兵是什麼，條件就檢查什麼</strong>——用 -1 當結束訊號，就檢查 != -1。0 是正常的點數，別讓它誤觸結束。</p>
+  </details>
+  <div class="callout"><strong>另一個更危險的錯：</strong>迴圈裡忘了 <code class="inline">cin >> points;</code>，points 永遠不變，條件永遠成立——<strong>無窮迴圈</strong>。上週說過「條件永遠成立會停不下來」，這週你知道成因了：條件裡的變數沒有被更新。關掉視窗，補上 cin。</div>
+<aside class="note"><strong>備課與帶領：</strong>36–38 分鐘。先預測 30 0 30 -1 在 points > 0 版的結果再執行。無窮迴圈成因這週講透：條件變數沒更新。</aside></section>
+
+<section class="slide" id="slide-11" data-title="下課前，確認三件事">
+  <p class="kicker">離堂檢核</p>
+  <h1>下課前，確認三件事</h1>
+  <div class="quiz" id="quiz">
+    <fieldset>
+      <legend>1. while 迴圈什麼時候會結束？</legend>
+      <label><input type="radio" name="q1" value="0">做滿固定圈數就結束</label>
+      <label><input type="radio" name="q1" value="1">條件不成立的時候</label>
+      <label><input type="radio" name="q1" value="0">印出金牌之後</label>
+    </fieldset>
+    <fieldset>
+      <legend>2. 進迴圈之前，為什麼要先 cin >> points 讀一次？</legend>
+      <label><input type="radio" name="q2" value="0">讓程式跑得更快</label>
+      <label><input type="radio" name="q2" value="1">讓條件第一次檢查時，points 已經有值</label>
+      <label><input type="radio" name="q2" value="0">其實不讀也可以</label>
+    </fieldset>
+    <fieldset>
+      <legend>3. 輸入 20 25 18 -1，while 版（哨兵 -1）跑了幾圈？</legend>
+      <label><input type="radio" name="q3" value="0">2 圈</label>
+      <label><input type="radio" name="q3" value="0">4 圈</label>
+      <label><input type="radio" name="q3" value="1">3 圈</label>
+    </fieldset>
+    <div class="quiz-actions">
+      <button class="btn" id="check" type="button">檢查答案</button>
+      <button class="btn ghost" id="reset" type="button">重新作答</button>
+      <span id="feedback" role="status"></span>
+    </div>
+  </div>
+  <div class="callout">請用一句話說明：什麼時候用 for、什麼時候用 while？</div>
+<aside class="note"><strong>備課與帶領：</strong>38–40 分鐘。檢核三題之外，最後要聽到學生用自己的話說「知道幾次用 for、不知道幾次用 while」。</aside></section>
+
+</main>
+
+<footer>
+  <div class="progress" aria-hidden="true"><div class="progress-fill" id="pfill"></div></div>
+  <div class="footer-bar">
+    <button id="prev" type="button">← 上一頁</button>
+    <label class="jump-wrap"><span class="sr-only">選擇頁面</span><select id="jump"></select></label>
+    <span id="count"></span>
+    <button id="next" type="button">下一頁 →</button>
+  </div>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var pages=[].slice.call(document.querySelectorAll('.slide')),
+      jump=document.getElementById('jump'),
+      count=document.getElementById('count'),
+      prev=document.getElementById('prev'),
+      next=document.getElementById('next'),
+      pfill=document.getElementById('pfill'),
+      n=0;
+
+  pages.forEach(function(p,i){
+    var o=document.createElement('option');
+    o.value=i;o.textContent=(i+1)+'. '+p.getAttribute('data-title');
+    jump.appendChild(o);
+  });
+
+  function go(i){
+    n=Math.max(0,Math.min(i,pages.length-1));
+    pages.forEach(function(p,k){
+      var on=k===n;
+      p.classList.toggle('active',on);
+      if(on){p.inert=false;}else{p.setAttribute('inert','');}
+    });
+    jump.value=String(n);
+    count.textContent=(n+1)+' / '+pages.length;
+    prev.disabled=n===0;
+    next.disabled=n===pages.length-1;
+    pfill.style.width=(((n+1)/pages.length)*100)+'%';
+    try{history.replaceState(null,'','#slide-'+(n+1));}catch(e){}
+    var m=document.getElementById('main');
+    if(m){m.scrollTop=0;}
+  }
+
+  function fromHash(){
+    var m=location.hash.match(/^#slide-(\d+)$/);
+    go(m?parseInt(m[1],10)-1:0);
+  }
+
+  jump.addEventListener('change',function(){go(parseInt(jump.value,10));});
+  prev.addEventListener('click',function(){go(n-1);});
+  next.addEventListener('click',function(){go(n+1);});
+  window.addEventListener('hashchange',fromHash);
+
+  document.addEventListener('keydown',function(e){
+    var t=e.target;
+    if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;
+    if(e.key==='ArrowLeft'){go(n-1);}
+    else if(e.key==='ArrowRight'){go(n+1);}
+    else if(e.key==='Home'){go(0);}
+    else if(e.key==='End'){go(pages.length-1);}
+  });
+
+  var sx=0,sy=0,st=0;
+  document.addEventListener('touchstart',function(e){
+    if(e.touches.length!==1){sx=null;return;}
+    sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();
+  },{passive:true});
+  document.addEventListener('touchend',function(e){
+    if(sx===null)return;
+    var dx=e.changedTouches[0].clientX-sx,
+        dy=e.changedTouches[0].clientY-sy;
+    sx=null;
+    if(Date.now()-st>800)return;
+    if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.3)return;
+    var src=e.target;
+    while(src&&src!==document.body){
+      if(src.tagName==='PRE'||src.tagName==='SELECT'||src.tagName==='INPUT')return;
+      src=src.parentNode;
+    }
+    go(n+(dx<0?1:-1));
+  },{passive:true});
+
+  [].slice.call(document.querySelectorAll('.copy')).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var pre=btn.parentNode.querySelector('pre');
+      var txt=pre?pre.textContent:'';
+      function done(){btn.textContent='已複製';setTimeout(function(){btn.textContent='複製';},1600);}
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(txt).then(done,function(){fallback();});
+      }else{fallback();}
+      function fallback(){
+        try{
+          var ta=document.createElement('textarea');
+          ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+          document.body.appendChild(ta);ta.select();
+          document.execCommand('copy');document.body.removeChild(ta);done();
+        }catch(err){btn.textContent='複製失敗';}
+      }
+    });
+  });
+
+  var steps=[17,20,23,26],si=1;
+  function applyFont(){document.documentElement.style.fontSize=steps[si]+'px';}
+  document.getElementById('fminus').addEventListener('click',function(){if(si>0){si--;applyFont();}});
+  document.getElementById('fplus').addEventListener('click',function(){if(si<steps.length-1){si++;applyFont();}});
+
+  var fsBtn=document.getElementById('fs');
+  fsBtn.addEventListener('click',function(){
+    try{
+      if(document.fullscreenElement){document.exitFullscreen();}
+      else if(document.documentElement.requestFullscreen){document.documentElement.requestFullscreen();}
+      else{fsBtn.disabled=true;}
+    }catch(e){fsBtn.disabled=true;}
+  });
+
+  var check=document.getElementById('check'),
+      reset=document.getElementById('reset'),
+      fb=document.getElementById('feedback');
+  if(check){
+    check.addEventListener('click',function(){
+      var score=0,total=0;
+      ['q1','q2','q3'].forEach(function(name){
+        var opts=[].slice.call(document.querySelectorAll('input[name="'+name+'"]'));
+        if(!opts.length)return;total++;
+        opts.forEach(function(o){
+          o.parentNode.style.background='';
+          if(o.checked&&o.value==='1'){score++;}
+        });
+      });
+      fb.className='';
+      if(score===total){fb.textContent='全部答對，你可以下課了。';fb.className='ok';}
+      else{fb.textContent='答對 '+score+' / '+total+' 題，再核對一次頁面上的重點。';fb.className='no';}
+    });
+    reset.addEventListener('click',function(){
+      [].slice.call(document.querySelectorAll('#quiz input[type=radio]')).forEach(function(o){o.checked=false;});
+      fb.textContent='';fb.className='';
+    });
+  }
+
+  fromHash();
+})();
+</script>
+</body>
+</html>
